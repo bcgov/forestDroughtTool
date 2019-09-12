@@ -8,17 +8,35 @@ forestDroughtTool
 Description of package
 
 ### Features
+Currently the package has the following functions and datasets:
+- `asmrCalc()` - Compute daily water balance for five relative soil moisture regimes.
+- `soilsData` - Soils dataset used by asmrCalc() 
+- `PrinceGeorge` - Daily 1918-2008 climate data from Prince George A climate station
+
+### References
+Nitschke, C.R., M. Amoroso, K.D. Coates and R. Astrup. 2012. The influence of climate change, site type and disturbance on stand dynamics in northwest British Columbia, Canada. Ecosphere 3 (1):11. 
+
+Nitschke, C.R., and J.L. Innes. 2008. A Tree and Climate Assessment Tool for Modelling Ecosystem Response to Climate Change.  Ecological Modelling 210 (3): 263-277. 
+
 
 ### Installation
 
-### Usage
+You can install `forestDroughtTool` directly from this GitHub repository using the
+[remotes](https://cran.r-project.org/package=remotes) package:
+
+  ``` r
+install.packages("remotes")
+
+remotes::install_github("bcgov/forestDroughtTool")
+library(forestDroughtTool)
+```
 
 #### Example
 
-This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-## basic example code
+## Calculate daily ASMR for five different RSMR using Prince George climate station data
+x<-asmrCalc(PrinceGeorge)
 ```
 
 ### Project Status
