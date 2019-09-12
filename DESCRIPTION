@@ -1,0 +1,16 @@
+Package: forestDroughtTool
+Type: Package
+Title: Predict Forest Drought Hazard In British Columbia
+Version: 0.1.0
+Author: C.Delong, C. Nitschke, H.Griesbauer, V. Foord, B. Rogers
+Maintainer: The package maintainer <hardy.griesbauer@gov.bc.ca>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dplyr,
+    ggplot2,
+    tidyr
+RoxygenNote: 6.1.1
