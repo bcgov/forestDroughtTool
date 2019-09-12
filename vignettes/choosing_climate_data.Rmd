@@ -1,0 +1,77 @@
+---
+title: "Choosing climate data for ASMR calculations"
+author: "Hardy Griesbauer"
+date: "12/09/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+The purpose of this vignette is to document our process for selecting climate data as input to the asmrCalc() function in the forestDroughtTool R package.
+
+```{r}
+
+# Load libraries
+library(bcmaps)
+library(weathercan)
+library(dplyr)
+library(magrittr)
+
+```
+
+## Climate station coverage for BGC units in BC
+Environment Canada (EC) daily climate stations seem to be the best so far because they have relatively long records and they record winter precipitation.
+
+We can use a few R packages to identify EC stations with daily data and their corresponding BGC unit.
+
+```{r}
+
+# Step 1.1 - Select stations in BC with daily data and assign to 'stn'
+stn<-
+  stations %>% 
+  filter(prov=="BC" & interval=="day") %>%  
+  
+# Step 1.2 - Convert to a spatial file and merge with BGC units (this will take awhile!)
+  st_as_sf(coords=c("lon","lat")) %>% # convert to spatial file
+  st_set_crs(4326) %>% # set to WGS1984 datum
+  transform_bc_albers() %>% # set to BC albers projection
+  st_join(bec()[,"MAP_LABEL"]) %>%  # merge with BEC
+  st_drop_geometry() # drop geometry
+
+# Step 1.3 Summarize station coverage
+  stn %>% 
+    group_by(MAP_LABEL) %>%
+    summarise(Num.Stn=n())
+
+```  
+
+## Subset stations for BGC units of interest
+We can now download data for BGC unit(s) of interest.
+```{r}
+
+
+
+```
+
+## Formatting of daily climate data
+Daily climate data have to be formatted correctly for the asmrCalc() function to work properly.  There have to seven columns in the data:
+- date
+- tmn
+- tmx
+- ppt
+- year
+- month
+- day
+
+As an example, refer to the Prince George daily climate data in the forestDroughtTool package:
+
+
+```{r, echo=FALSE}
+library(forestDroughtTool)
+PrinceGeorge
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
