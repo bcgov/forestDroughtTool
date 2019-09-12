@@ -19,6 +19,7 @@ library(bcmaps)
 library(weathercan)
 library(dplyr)
 library(magrittr)
+library(ggplot2)
 
 ```
 
@@ -51,10 +52,44 @@ stn<-
 ## Subset stations for BGC units of interest
 We can now download data for BGC unit(s) of interest.
 ```{r}
+# List the BGC units of interest
+bgc<-c("SBSdk","SBSwk1")
+
+# Filter stations for those units
+stnBGC<-
+  stn %>% 
+  filter(MAP_LABEL%in%bgc) %>% # filter for BGC units of interest
+  mutate(length=end-start+1) %>% # create a column to show record length
+  arrange(desc(length)) %>% 
+  select(station_name,station_id,MAP_LABEL,start,end,length)
+
+stnBGC
+
+```
+
+Note there aren't many records for SBSwk1.  Might want to drop the variant from the BGC unit, and see if there any any stations in that subzone but in other variants.
+
+## Downloading of daily climate data
+For this vignette, let's download the Smithers A climate station data. From the above table, we see that the station ID is 487.  We'll need this number for the weather download.  We'll also limit the download to 1955 to 1995 (somewhat around the 1961-1990 climate normal period.)
+
+```{r}
+
+# Download climate station data (this can take a long time!)
+sm.dat<-
+  weather_dl(station_ids=487,start="1955-01-01",end="1995-12-31")
+
+```
+
+You can download data for multiple stations at once.
+
+```{r}
 
 
 
 ```
+
+## Plot out data for coverage
+
 
 ## Formatting of daily climate data
 Daily climate data have to be formatted correctly for the asmrCalc() function to work properly.  There have to seven columns in the data:
