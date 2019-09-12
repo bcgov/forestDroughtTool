@@ -20,6 +20,7 @@ library(weathercan)
 library(dplyr)
 library(magrittr)
 library(ggplot2)
+library(cowplot)
 
 ```
 
@@ -76,13 +77,23 @@ For this vignette, let's download the Smithers A climate station data. From the 
 
 # Download climate station data (this can take a long time!)
 sm.dat<-
-  weather_dl(station_ids=487,start="1955-01-01",end="1995-12-31")
+  weather_dl(station_ids=487,interval="day",start="1955-01-01",end="1995-12-31") %>%
+  select(stn=station_name,date,tmn=min_temp,tmx=max_temp,ppt=total_precip,year,month,day)
 
 ```
 
 You can download data for multiple stations at once.
 
+## Plot data to confirm data coverage
+
 ```{r}
+
+# Create plots 
+  p1<-ggplot(sm.dat,aes(x=date,y=ppt))+geom_line()
+  p2<-ggplot(sm.dat,aes(x=date,y=tmx))+geom_line()
+  p3<-ggplot(sm.dat,aes(x=date,y=tmn))+geom_line()
+  plot_grid(p1,p2,p3)
+  
 
 
 
