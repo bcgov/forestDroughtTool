@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction
 The purpose of this vignette is to document our process for selecting climate data as input to the asmrCalc() function in the forestDroughtTool R package.
 
-```{r}
+```{r message=FALSE}
 
 # Load libraries
 library(bcmaps)
@@ -123,6 +123,18 @@ We need to process missing values in the daily climate data.  For this project, 
 
 ```{r}
 sm.dat_filled<-cleanECData(sm.dat)
+
+```
+
+If you are cleaning data for multiple station files downloaded into one data frame, use the following code:
+```{r}
+# Not run
+# climData is multi-station data downloaded using the weathercan package
+
+# X<-select(climData,stn=station_name,date,tmn=min_temp,tmx=max_temp,ppt=total_precip,year,month,day)
+# x1<-by(INDICES=X$stn,function(x) cleanECData(x),data=X)
+# x2<-do.call(rbind.data.frame, x1)
+
 
 ```
 
