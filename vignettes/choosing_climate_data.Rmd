@@ -99,7 +99,8 @@ You can download data for multiple stations at once.
 
 ```
 
-## Plot out data for coverage
+## Summarise NA values in data
+We need to process missing values in the data.  First step is to 
 
 
 ## Formatting of daily climate data
