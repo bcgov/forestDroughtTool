@@ -18,6 +18,10 @@ different parameters, then modify the soilsData variable.}
 This function uses daily climate and soils data to estimate daily
 water balance for five different soil moisture regimes.
 }
+\details{
+Function returns a time series of monthly ASMR values for five sites.
+Use the summariseASMR() function to create monthly summaries.
+}
 \examples{
 asmrCalc(PrinceGeorge)
 }

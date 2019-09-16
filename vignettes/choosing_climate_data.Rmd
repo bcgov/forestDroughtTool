@@ -1,5 +1,5 @@
 ---
-title: "Choosing climate data for ASMR calculations"
+title: "Choosing and cleaning climate data for ASMR calculations"
 author: "Hardy Griesbauer"
 date: "12/09/2019"
 output: html_document
@@ -78,33 +78,16 @@ For this vignette, let's download the Smithers A climate station data. From the 
 # Download climate station data (this can take a long time!)
 sm.dat<-
   weather_dl(station_ids=487,interval="day",start="1955-01-01",end="1995-12-31") %>%
+  
+  # format climate data (see below for more information)
   select(stn=station_name,date,tmn=min_temp,tmx=max_temp,ppt=total_precip,year,month,day)
 
 ```
 
 You can download data for multiple stations at once.
 
-## Plot data to confirm data coverage
-
-```{r}
-
-# Create plots 
-  p1<-ggplot(sm.dat,aes(x=date,y=ppt))+geom_line()
-  p2<-ggplot(sm.dat,aes(x=date,y=tmx))+geom_line()
-  p3<-ggplot(sm.dat,aes(x=date,y=tmn))+geom_line()
-  plot_grid(p1,p2,p3)
-  
-
-
-
-```
-
-## Summarise NA values in data
-We need to process missing values in the data.  First step is to 
-
-
 ## Formatting of daily climate data
-Daily climate data have to be formatted correctly for the asmrCalc() function to work properly.  There have to seven columns in the data:
+Daily climate data have to be formatted correctly for the asmrCalc() function to work properly.  There have to seven columns in the data, and they must be named exactly as follows:
 - date
 - tmn
 - tmx
@@ -115,10 +98,37 @@ Daily climate data have to be formatted correctly for the asmrCalc() function to
 
 As an example, refer to the Prince George daily climate data in the forestDroughtTool package:
 
-
 ```{r, echo=FALSE}
-library(forestDroughtTool)
+
 PrinceGeorge
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Plot data to confirm data coverage
+
+```{r}
+
+# Create plots 
+  p1<-ggplot(sm.dat,aes(x=date,y=ppt))+geom_line()
+  p2<-ggplot(sm.dat,aes(x=date,y=tmx))+geom_line()
+  p3<-ggplot(sm.dat,aes(x=date,y=tmn))+geom_line()
+  plot_grid(p1,p2,p3)
+
+```
+
+## Summarise NA values in data
+We need to process missing values in the daily climate data.  For this project, we:
+- omitted any years with >10 consecutive missing data in any climate variable;and
+- imputed missing data using adjacent values (closest data before and after missing value)
+
+```{r}
+sm.dat_filled<-cleanECData(sm.dat)
+
+```
+
+If you want to know what years were omitted from analysis, and what daily values were imputed, use the following code:
+
+```{r}
+
+
+```
+

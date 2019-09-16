@@ -3,6 +3,9 @@
 #' This function uses daily climate and soils data to estimate daily
 #' water balance for five different soil moisture regimes.
 #'
+#' Function returns a time series of monthly ASMR values for five sites.
+#' Use the summariseASMR() function to create monthly summaries.
+#'
 #'@param climateData Climate data must be imported correctly.
 #'@param latitude Latitude can be one of three numbers (50,55,60)
 #'@param soils This can be the soilsData variable as already defined.  If you want to use

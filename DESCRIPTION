@@ -12,5 +12,7 @@ LazyData: true
 Imports:
     dplyr,
     ggplot2,
-    tidyr
+    tidyr,
+    imputeTS,
+    weathercan
 RoxygenNote: 6.1.1

@@ -2,6 +2,7 @@
 
 export(asmrCalc)
 export(cleanECData)
+export(summariseASMR)
 import(dplyr)
 import(imputeTS)
 import(tidyr)
