@@ -21,6 +21,7 @@ library(dplyr)
 library(magrittr)
 library(ggplot2)
 library(cowplot)
+library(forestDroughtTool)
 
 ```
 
