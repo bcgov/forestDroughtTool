@@ -4,23 +4,22 @@
 \name{soilsData}
 \alias{soilsData}
 \title{Soils data for five relative soil moisture regimes.}
-\format{A data frame with 33215 rows and 7 variables}
+\format{A data frame with 33215 rows and 7 variables
+\describe{
+\item{RSMR}{relative soil moisture regime}
+\item{root}{rooting depth (cm)}
+\item{CF}{daily maximum temperature, in Degree Celsius}
+\item{AWSC1}{daily precipitation amount, in mm}
+\item{FC}{daily precipitation amount, in mm}
+\item{AFC}{daily precipitation amount, in mm}
+\item{AWSC}{daily precipitation amount, in mm}
+\item{infRate}{infiltration rate}
+* ...
+}}
 \usage{
 soilsData
 }
 \description{
 A dataset containing soils data to be used when computing actual soil moisture regime.
-}
-\details{
-The variables are as follows:
-* `RSMR`: relative soil moisture regime
-* `root`: rooting depth (cm)
-* `CF`: daily maximum temperature, in Degree Celsius
-* `AWSC1`: daily precipitation amount, in mm
-* `FC`: daily precipitation amount, in mm
-* `AFC`: daily precipitation amount, in mm
-* `AWSC`: daily precipitation amount, in mm
-* `infRate`: infiltration rate
-* ...
 }
 \keyword{datasets}
