@@ -14,7 +14,8 @@ Imports:
     ggplot2,
     tidyr,
     imputeTS,
-    weathercan
+    weathercan,
+    magrittr
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
