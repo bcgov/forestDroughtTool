@@ -17,7 +17,7 @@
 #'@param excl data boundaries (usually 1940-2000, doesn`t need to be set)
 #'@param win ideal climate normal period (usually 1961-1990, doesn`t need to be set)
 #'@param yrs number of years to randomly select (usually 10, doesn`t need to be set)
-#' @import dplyr tidyr
+#' @import dplyr tidyr magrittr
 #' @export
 #' @examples
 #' asmrSelect((asmrCalc(PrinceGeorge)))
