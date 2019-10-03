@@ -20,7 +20,7 @@
 #' @import dplyr tidyr magrittr
 #' @export
 #' @examples
-#' asmrSelect((asmrCalc(PrinceGeorge)))
+#' asmrSelect(asmrCalc(PrinceGeorge))
 #'
 
 
