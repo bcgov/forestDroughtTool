@@ -5,7 +5,7 @@
 #'
 #' The function uses the following approach:
 #'
-#' #' \itemize{
+#' \itemize{
 #'   \item Data from 1961-1990 climate normal period are preferred
 #'   \item No data from outside 1940-2000 period are used
 #'   \item 10 years are selected randomly to generate ASMR summaries.  If there are 10+ years within the 1961-1990 period, years will be randomly selected from that time period.
