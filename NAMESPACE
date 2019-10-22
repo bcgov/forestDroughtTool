@@ -3,6 +3,7 @@
 export(asmrCalc)
 export(asmrSelect)
 export(cleanECData)
+export(futureASMR)
 export(summariseASMR)
 import(dplyr)
 import(imputeTS)
