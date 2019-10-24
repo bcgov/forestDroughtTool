@@ -38,6 +38,7 @@ and three time periods:
 Input:
 }
 \examples{
-
+futureASMR(PrinceGeorge,"SBSmk1")
 
 }
+\keyword{internal}
