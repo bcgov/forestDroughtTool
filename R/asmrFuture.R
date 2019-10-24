@@ -25,10 +25,10 @@
 #'Input:
 #'@param stnData climate station data
 #'@param bgc corresponding BGC variant for stnData (e.g., "SBSmk1)
-#' @import dplyr tidyr magrittr
+#' @import dplyr tidyr magrittr stringr
 #' @export
 #' @examples
-#'
+#'futureASMR(PrinceGeorge,"SBSmk1")
 #'
 
 futureASMR<-function(stnData,bgc) {
@@ -90,7 +90,7 @@ futureASMR<-function(stnData,bgc) {
       pivot_wider(names_from=var,values_from=value,names_prefix="future.") %>%
 
       # join with climate station data
-      right_join(stn,by="month") %>%
+      right_join(stnData,by="month") %>%
 
       # adjust current data with future data
       mutate(ppt=ppt*future.PPT) %>%
