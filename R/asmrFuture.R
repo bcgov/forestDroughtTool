@@ -39,7 +39,7 @@ futureASMR<-function(stnData,bgc) {
   x<-
 
     # Filter for BGC unit
-    filter(bgcClim,BGC==bgc) %>%
+    dplyr::filter(bgcClim,BGC==bgc) %>%
     group_by(period) %>%
     summarize_if(is.numeric,mean) %>%
     .[-1,] %>%
