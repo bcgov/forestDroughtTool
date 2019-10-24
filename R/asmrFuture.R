@@ -32,7 +32,7 @@
 #'futureASMR(PrinceGeorge,"SBSmk1")
 #'
 
-futureASMR<-function(stnData,bgc) {
+asmrFuture<-function(stnData,bgc) {
 
   # Step 1: Prepare future climate data
 
