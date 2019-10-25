@@ -13,12 +13,12 @@
 #'@param years either "random" or custom vector of years, as integers
 #'@param lat latitude in degrees, either 50,55 or 60
 #'@import dplyr tidyr magrittr stringr
-#'@keywords internal
+#'@export
 #'@examples
-#'asmrSumm(PrinceGeorge,bgc="SBSmk1")
+#'asmr(PrinceGeorge,bgc="SBSmk1")
 #'
 
-asmrSumm<-function(stnData,bgc, soils=soilsData,future=TRUE,years="random",lat=55){
+asmr<-function(stnData,bgc, soils=soilsData,future=TRUE,years="random",lat=55){
 
  # Run asmr
   asmr1<-asmrRun(stnData,soils,future,bgc,years,lat)
