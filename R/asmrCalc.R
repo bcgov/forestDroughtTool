@@ -11,7 +11,7 @@
 #'@param soils This can be the soilsData variable as already defined.  If you want to use
 #'different parameters, then modify the soilsData variable.
 #' @import dplyr tidyr
-#' @export
+#' @keywords internal
 #' @examples
 #' asmrCalc(PrinceGeorge)
 

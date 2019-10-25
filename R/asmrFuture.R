@@ -26,12 +26,13 @@
 #'@param stnData climate station data
 #'@param bgc corresponding BGC variant for stnData (e.g., "SBSmk1)
 #' @import dplyr tidyr magrittr stringr
-#' @export
+#' @keywords internal
+#'
 #' @examples
 #'futureASMR(PrinceGeorge,"SBSmk1")
 #'
 
-futureASMR<-function(stnData,bgc) {
+asmrFuture<-function(stnData,bgc) {
 
   # Step 1: Prepare future climate data
 
@@ -39,7 +40,7 @@ futureASMR<-function(stnData,bgc) {
   x<-
 
     # Filter for BGC unit
-    filter(bgcClim,BGC==bgc) %>%
+    dplyr::filter(bgcClim,BGC==bgc) %>%
     group_by(period) %>%
     summarize_if(is.numeric,mean) %>%
     .[-1,] %>%
@@ -101,7 +102,7 @@ futureASMR<-function(stnData,bgc) {
       dplyr::select(period,Scenario,date,year,month,day,tmn,tmx,ppt) %>%
 
       # run asmrCalc()
-      asmrCalc() %>%
+      # asmrCalc() %>%
 
       # retun
       return()

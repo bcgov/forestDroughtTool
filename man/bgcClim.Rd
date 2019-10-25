@@ -10,7 +10,6 @@
 \item{period: climatic period, either normal or future}
 \item{Scenario: carbon emission scenario for future periods}
 \item{assorted climate variables}
-* ...
 }}
 \usage{
 bgcClim

@@ -13,7 +13,7 @@
 #'
 #' }
 #'
-#'@param asmrData Output from asmrCalc() function.
+#'@param stnData cleaned climate data, properly formatted
 #'@param excl data boundaries (usually 1940-2000, doesn`t need to be set)
 #'@param win ideal climate normal period (usually 1961-1990, doesn`t need to be set)
 #'@param yrs number of years to randomly select (usually 10, doesn`t need to be set)
@@ -21,19 +21,19 @@
 #'@keywords internal
 
 #' @examples
-#' asmrSelect(asmrCalc(PrinceGeorge))
+#' asmrSelect(PrinceGeorge)
 #'
 
 
-asmrSelect<-function(asmrData,excl=c(1940,2000),win=c(1961,1990),yrs=10) {
+yearSelect<-function(stnData,excl=c(1940,2000),win=c(1961,1990),yrs=10) {
 
   # First, exclude any years outside the 1940-2000 time period
-  asmrData%<>%
+  stnData%<>%
     filter(year>=min(excl) & year<=max(excl))
 
   # Data filtered for ideal climate normal period
     x1<-
-      asmrData %>%
+      stnData %>%
       filter(year>=min(win) & year<=max(win))
 
   # Create if - then statement
@@ -43,7 +43,7 @@ asmrSelect<-function(asmrData,excl=c(1940,2000),win=c(1961,1990),yrs=10) {
     no.years<-yrs-length(unique(x1$year))
 
     # 2. Create a new climate data frame with data outside the ideal climate normal period
-    x2<-asmrData[!asmrData$year%in%(min(win):max(win)), ]
+    x2<-stn[!stnData$year%in%(min(win):max(win)), ]
     x2<-x2[x2$year%in%sample(unique(x2$year),no.years),]
 
     # 3. Put the datasets together
@@ -55,9 +55,8 @@ asmrSelect<-function(asmrData,excl=c(1940,2000),win=c(1961,1990),yrs=10) {
 
   }
 
-  return(list(asmr=summariseASMR(x.final),
-              years=sort(unique(x.final$year))
-              ) # close list
-         ) # close return
+  return(years=sort(unique(x.final$year)))
+
+
 
 }
