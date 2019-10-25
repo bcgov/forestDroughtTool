@@ -20,7 +20,7 @@
 asmrRun=function(stnData,soils=soilsData,future=TRUE,bgc, years="random",lat=55) {
 
   # STEP 1: select years for analysis
-  # If user specieis that years should be selected at random:
+  # If user specifies that years should be selected at random:
   if (years=="random") {
 
     clim<-stnData[stnData$year%in%yearSelect(stnData),]
