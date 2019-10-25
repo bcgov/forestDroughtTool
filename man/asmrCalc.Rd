@@ -25,3 +25,4 @@ Use the summariseASMR() function to create monthly summaries.
 \examples{
 asmrCalc(PrinceGeorge)
 }
+\keyword{internal}
