@@ -37,10 +37,10 @@ asmrCalc<-function(climateData,latitude=55,soils=soilsData) {
   daylength=daylength.table[,grep(paste("N",latitude,sep=""),names(daylength.table))]
 
 # EXTRACT SOILS INFORMATION
-  root=soils$root
-  CF=soils$CF
-  AWSC1=soils$AWSC1
-  FC=soils$FC
+  root=soils$root # NOT USED
+  CF=soils$CF # NOT USED
+  AWSC1=soils$AWSC1 # NOT USED
+  FC=soils$FC # NOT USED
   AFC=soils$AFC
   AWSC=soils$AWSC
   infRate=soils$infRate
