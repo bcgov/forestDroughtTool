@@ -1,0 +1,31 @@
+---
+title: "Climate Data Cleaning"
+author: "Hardy"
+date: "11/20/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load libraries
+library(tidyverse)
+library(forestDroughtTool)
+library(lubridate)
+
+```
+
+```{r pennaskSummit }
+
+pennAsk <- 
+  read_excel("PennaskSummit_daily.xlsx") %>%   
+  mutate(year=year(Day),
+         month=month(Day),
+         day=day(Day)) %>% 
+  rename(tmn="Tmin",
+         tmx="Tmax",
+         ppt="Precip") %>% 
+mutate(stn="Pennask")
+  
+
+```
