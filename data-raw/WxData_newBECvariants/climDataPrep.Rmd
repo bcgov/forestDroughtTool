@@ -13,19 +13,138 @@ library(tidyverse)
 library(forestDroughtTool)
 library(lubridate)
 
+
 ```
 
-```{r pennaskSummit }
+```{r define cleanData function}
+# imputeTS has now changed so have to recode function
 
-pennAsk <- 
-  read_excel("PennaskSummit_daily.xlsx") %>%   
+cleanData<-function(climateData) {
+  
+  # Omit years with 10 or more consecutive missing values in any climate variable
+
+  climateData %>%
+  group_by(year) %>%
+  summarise(pptNA=imputeTS::statsNA(ppt,print_only=FALSE)$longest_na_gap,
+            tmxNA=imputeTS::statsNA(tmx,print_only=FALSE)$longest_na_gap,
+            tmnNA=imputeTS::statsNA(tmn,print_only=FALSE)$longest_na_gap)%>%
+  mutate(pptNA, pptNA = ifelse(is.na(pptNA), 0, pptNA)) %>%
+  mutate(tmxNA, tmxNA = ifelse(is.na(tmxNA), 0, tmxNA)) %>%
+  mutate(tmnNA, tmnNA = ifelse(is.na(tmnNA), 0, tmnNA)) %>%
+  filter(pptNA<10&tmxNA<10&tmnNA<10) %>%
+  select(year) %>%
+  
+  # Impute NA values using adjacent values
+  left_join(climateData,by="year") %>%
+  mutate(ppt2=imputeTS::na_locf(ppt),ppt3=imputeTS::na_locf(ppt,option="nocb")) %>%
+  mutate(tmx2=imputeTS::na_locf(tmx),tmx3=imputeTS::na_locf(tmx,option="nocb")) %>%
+  mutate(tmn2=imputeTS::na_locf(tmn),tmn3=imputeTS::na_locf(tmn,option="nocb")) %>%
+  rowwise() %>%
+  mutate(ppt_filled=mean(ppt2,ppt3)) %>%
+  mutate(tmx_filled=mean(tmx2,tmx3)) %>%
+  mutate(tmn_filled=mean(tmn2,tmn3)) %>%
+  dplyr::select(year,month,day,ppt_filled,tmx_filled,tmn_filled) %>% 
+ 
+     return()
+}
+
+
+
+```
+
+```{r import stn data,message=FALSE,warning=FALSE}
+
+apex<-
+  readxl::read_excel("ApexRoadside_daily.xlsx") %>% 
   mutate(year=year(Day),
          month=month(Day),
          day=day(Day)) %>% 
   rename(tmn="Tmin",
          tmx="Tmax",
          ppt="Precip") %>% 
-mutate(stn="Pennask")
+mutate(stn="apex") %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+beaverdell<-
+  readxl::read_excel("Beaverdell_daily.xlsx") %>% 
+  mutate(year=year(Day),
+         month=month(Day),
+         day=day(Day)) %>% 
+  rename(tmn="Tmin",
+         tmx="Tmax",
+         ppt="Precip") %>% 
+mutate(stn="beaverdell") %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+bigCreek<-
+  readxl::read_excel("BigCreek_1893-1998.xlsx",range="B2:J38686",skip=1,col_types = "numeric") %>% 
+  transmute(stn="bigCreek",
+            year=Year,
+         month=Month,
+         day=Day,
+         tmn=Tmin,
+         tmx=Tmax,
+         ppt=Total)
+
+bmn<-
+  readxl::read_excel("BMN_1993-2020.xlsx",skip=1) %>% 
+  setNames(c("time","ppt","tmx","tmn")) %>% 
+  mutate(stn="bmn",
+         year=year(time),
+         month=month(time),
+         day=day(time)) %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+
+fording<-
+  readxl::read_excel("FordingRiverCominco_1970-2017.xlsx",skip=0) %>% 
+    transmute(stn="fording",
+            year=Year,
+         month=Month,
+         day=Day,
+         tmn=Tmin,
+         tmx=Tmax,
+         ppt=Total)
+
+greenstone<-
+  readxl::read_excel("GreenstoneHub_daily.xlsx") %>%   
+  mutate(year=year(Day),
+         month=month(Day),
+         day=day(Day)) %>% 
+  rename(tmn="Tmin",
+         tmx="Tmax",
+         ppt="Precip") %>% 
+mutate(stn="greenstone") %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+idaBell<-
+  readxl::read_excel("IdaBell3_daily.xlsx") %>%   
+  mutate(year=year(Day),
+         month=month(Day),
+         day=day(Day)) %>% 
+  rename(tmn="Tmin",
+         tmx="Tmax",
+         ppt="Precip") %>% 
+mutate(stn="idaBell") %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+jellicoe<-
+  
+
+pennAsk <- 
+  readxl::read_excel("PennaskSummit_daily.xlsx") %>%   
+  mutate(year=year(Day),
+         month=month(Day),
+         day=day(Day)) %>% 
+  rename(tmn="Tmin",
+         tmx="Tmax",
+         ppt="Precip") %>% 
+mutate(stn="pennask") %>% 
+  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+
+
+
+
   
 
 ```
