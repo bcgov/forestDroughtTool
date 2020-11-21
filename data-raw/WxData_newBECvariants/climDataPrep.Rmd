@@ -19,11 +19,12 @@ library(lubridate)
 ```{r define cleanData function}
 # imputeTS has now changed so have to recode function
 
-cleanData<-function(climateData) {
+cleanData<-function(climData) {
   
   # Omit years with 10 or more consecutive missing values in any climate variable
 
-  climateData %>%
+  climData %>%
+  # filter(stn==stnID) %>% 
   group_by(year) %>%
   summarise(pptNA=imputeTS::statsNA(ppt,print_only=FALSE)$longest_na_gap,
             tmxNA=imputeTS::statsNA(tmx,print_only=FALSE)$longest_na_gap,
@@ -35,7 +36,7 @@ cleanData<-function(climateData) {
   select(year) %>%
   
   # Impute NA values using adjacent values
-  left_join(climateData,by="year") %>%
+  left_join(climData,by="year") %>%
   mutate(ppt2=imputeTS::na_locf(ppt),ppt3=imputeTS::na_locf(ppt,option="nocb")) %>%
   mutate(tmx2=imputeTS::na_locf(tmx),tmx3=imputeTS::na_locf(tmx,option="nocb")) %>%
   mutate(tmn2=imputeTS::na_locf(tmn),tmn3=imputeTS::na_locf(tmn,option="nocb")) %>%
@@ -211,13 +212,30 @@ X<-list(
 ) # close list
   
 # now rbind the data frames
-climData<-
+rawData<-
   bind_rows(X) %>% 
   mutate(stn=factor(stn))
+
+# apply cleanData function
+cleanedData<-  
+  rawData %>% 
+  group_by(stn) %>% 
+  group_modify(~ cleanData(.x))
+
+climData<-
+  list(rawData,cleanedData)
 
 save(climData,file="climData.RData")
 
 ```
 
+```{r cleanData}
 
+# Load climate data (compiled from previous step)
+load("climData.RData")
+
+
+
+
+```
 
