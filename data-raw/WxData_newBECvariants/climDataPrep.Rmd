@@ -6,7 +6,7 @@ output: word_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 
 # Load libraries
 library(tidyverse)
@@ -223,16 +223,27 @@ cleanedData<-
   group_modify(~ cleanData(.x))
 
 climData<-
-  list(rawData,cleanedData)
+  list(rawData=rawData,cleanedData=cleanedData)
 
 save(climData,file="climData.RData")
 
 ```
 
-```{r cleanData}
+```{r summarize data}
 
 # Load climate data (compiled from previous step)
 load("climData.RData")
+
+# Summarize data
+climData %>% 
+  pluck("cleanedData") %>% 
+  rename(Station="stn") %>% 
+  group_by(Station) %>% 
+  summarise(NumYrs=length(unique(year)),
+            From=min(year),
+            To=max(year)) %>% 
+  knitr::kable()
+
 
 
 
