@@ -52,99 +52,172 @@ cleanData<-function(climateData) {
 
 ```
 
-```{r import stn data,message=FALSE,warning=FALSE}
+```{r import stn data,message=FALSE,warning=FALSE,eval=FALSE}
 
-apex<-
-  readxl::read_excel("ApexRoadside_daily.xlsx") %>% 
-  mutate(year=year(Day),
-         month=month(Day),
-         day=day(Day)) %>% 
-  rename(tmn="Tmin",
-         tmx="Tmax",
-         ppt="Precip") %>% 
-mutate(stn="apex") %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+# This won't run, takes a long time
 
-beaverdell<-
-  readxl::read_excel("Beaverdell_daily.xlsx") %>% 
-  mutate(year=year(Day),
-         month=month(Day),
-         day=day(Day)) %>% 
-  rename(tmn="Tmin",
-         tmx="Tmax",
-         ppt="Precip") %>% 
-mutate(stn="beaverdell") %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
+# Compile climate data into a list
+X<-list(
 
-bigCreek<-
-  readxl::read_excel("BigCreek_1893-1998.xlsx",range="B2:J38686",skip=1,col_types = "numeric") %>% 
-  transmute(stn="bigCreek",
-            year=Year,
-         month=Month,
-         day=Day,
-         tmn=Tmin,
-         tmx=Tmax,
-         ppt=Total)
-
-bmn<-
-  readxl::read_excel("BMN_1993-2020.xlsx",skip=1) %>% 
-  setNames(c("time","ppt","tmx","tmn")) %>% 
-  mutate(stn="bmn",
-         year=year(time),
-         month=month(time),
-         day=day(time)) %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
-
-
-fording<-
-  readxl::read_excel("FordingRiverCominco_1970-2017.xlsx",skip=0) %>% 
-    transmute(stn="fording",
-            year=Year,
-         month=Month,
-         day=Day,
-         tmn=Tmin,
-         tmx=Tmax,
-         ppt=Total)
-
-greenstone<-
-  readxl::read_excel("GreenstoneHub_daily.xlsx") %>%   
-  mutate(year=year(Day),
-         month=month(Day),
-         day=day(Day)) %>% 
-  rename(tmn="Tmin",
-         tmx="Tmax",
-         ppt="Precip") %>% 
-mutate(stn="greenstone") %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
-
-idaBell<-
-  readxl::read_excel("IdaBell3_daily.xlsx") %>%   
-  mutate(year=year(Day),
-         month=month(Day),
-         day=day(Day)) %>% 
-  rename(tmn="Tmin",
-         tmx="Tmax",
-         ppt="Precip") %>% 
-mutate(stn="idaBell") %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
-
-jellicoe<-
+    apex<-
+      readxl::read_excel("ApexRoadside_daily.xlsx") %>% 
+      mutate(year=year(Day),
+             month=month(Day),
+             day=day(Day)) %>% 
+      rename(tmn="Tmin",
+             tmx="Tmax",
+             ppt="Precip") %>% 
+     mutate(stn="apex") %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt) %>% 
+      mutate_at(vars(year:ppt),as.numeric), 
+      
+    
+    beaverdell<-
+      readxl::read_excel("Beaverdell_daily.xlsx") %>% 
+      mutate(year=year(Day),
+             month=month(Day),
+             day=day(Day)) %>% 
+      rename(tmn="Tmin",
+             tmx="Tmax",
+             ppt="Precip") %>% 
+    mutate(stn="beaverdell") %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    bigCreek<-
+      readxl::read_excel("BigCreek_1893-1998.xlsx",range="B2:J38686",skip=1,col_types = "numeric") %>% 
+      transmute(stn="bigCreek",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    bmn<-
+      readxl::read_excel("BMN_1993-2020.xlsx",skip=1) %>% 
+      setNames(c("time","ppt","tmx","tmn")) %>% 
+      mutate(stn="bmn",
+             year=year(time),
+             month=month(time),
+             day=day(time)) %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    
+    fording<-
+      readxl::read_excel("FordingRiverCominco_1970-2017.xlsx",skip=0) %>% 
+        transmute(stn="fording",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    greenstone<-
+      readxl::read_excel("GreenstoneHub_daily.xlsx") %>%   
+      mutate(year=year(Day),
+             month=month(Day),
+             day=day(Day)) %>% 
+      rename(tmn="Tmin",
+             tmx="Tmax",
+             ppt="Precip") %>% 
+    mutate(stn="greenstone") %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    idaBell<-
+      readxl::read_excel("IdaBell3_daily.xlsx") %>%   
+      mutate(year=year(Day),
+             month=month(Day),
+             day=day(Day)) %>% 
+      rename(tmn="Tmin",
+             tmx="Tmax",
+             ppt="Precip") %>% 
+    mutate(stn="idaBell") %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    jellicoe<-
+      readxl::read_excel("JellicoeDaily_1995-2020.xlsx") %>% 
+        transmute(stn="jellicoe",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    kimberley<-
+      readxl::read_excel("KimberleyPCC_1975-2020.xlsx") %>% 
+        transmute(stn="kimberley",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    pennask <- 
+      readxl::read_excel("PennaskSummit_daily.xlsx") %>%   
+      mutate(year=year(Day),
+             month=month(Day),
+             day=day(Day)) %>% 
+      rename(tmn="Tmin",
+             tmx="Tmax",
+             ppt="Precip") %>% 
+    mutate(stn="pennask") %>% 
+      dplyr::select(stn,year,month,day,tmn,tmx,ppt)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    redLake<-
+        readxl::read_excel("RedLakeDaily_1974-2020.xlsx") %>% 
+        transmute(stn="redLake",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    sparwood<-
+        readxl::read_excel("Sparwood_1980-2020.xlsx") %>% 
+        transmute(stn="sparwood",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin,
+             tmx=Tmax,
+             ppt=Total)%>% 
+      mutate_at(vars(year:ppt),as.numeric),
+    
+    wasa<-
+       readxl::read_excel("Wasa_1924-2017.xlsx",skip=1,col_types = "numeric") %>% 
+      transmute(stn="wasa",
+                year=Year,
+             month=Month,
+             day=Day,
+             tmn=Tmin...6,
+             tmx=Tmax...5,
+             ppt=Total...10)%>% 
+      mutate_at(vars(year:ppt),as.numeric)
   
-
-pennAsk <- 
-  readxl::read_excel("PennaskSummit_daily.xlsx") %>%   
-  mutate(year=year(Day),
-         month=month(Day),
-         day=day(Day)) %>% 
-  rename(tmn="Tmin",
-         tmx="Tmax",
-         ppt="Precip") %>% 
-mutate(stn="pennask") %>% 
-  dplyr::select(stn,year,month,day,tmn,tmx,ppt)
-
-
-
-
+) # close list
   
+# now rbind the data frames
+climData<-
+  bind_rows(X) %>% 
+  mutate(stn=factor(stn))
+
+save(climData,file="climData.RData")
 
 ```
+
+
+
