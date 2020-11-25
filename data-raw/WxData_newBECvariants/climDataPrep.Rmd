@@ -1,17 +1,22 @@
 ---
-title: "Climate Data Cleaning"
+title: "AET/PET ratios for BGC units"
 author: "Hardy"
 date: "11/20/2020"
 output: word_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE,message=FALSE)
 
 # Load libraries
 library(tidyverse)
 library(forestDroughtTool)
 library(lubridate)
+library(magrittr)
+
+# Load some functions
+source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/asmrCalc.R")
+source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/yearSelect.R")
 
 
 ```
@@ -214,13 +219,15 @@ X<-list(
 # now rbind the data frames
 rawData<-
   bind_rows(X) %>% 
-  mutate(stn=factor(stn))
+  mutate(stn=factor(stn)) %>% 
+  ungroup()
 
 # apply cleanData function
 cleanedData<-  
   rawData %>% 
   group_by(stn) %>% 
-  group_modify(~ cleanData(.x))
+  group_modify(~ cleanData(.x)) %>% 
+  ungroup()
 
 climData<-
   list(rawData=rawData,cleanedData=cleanedData)
@@ -228,6 +235,8 @@ climData<-
 save(climData,file="climData.RData")
 
 ```
+
+Here is table summarizing the number of years for each station that have sufficient climate data for AET/PET calculation, as per DeLong et al. (2019):
 
 ```{r summarize data}
 
@@ -238,6 +247,7 @@ load("climData.RData")
 climData %>% 
   pluck("cleanedData") %>% 
   rename(Station="stn") %>% 
+  mutate(Station=str_to_title(Station)) %>% 
   group_by(Station) %>% 
   summarise(NumYrs=length(unique(year)),
             From=min(year),
@@ -246,7 +256,181 @@ climData %>%
 
 
 
+```
+
+## BGC unit ASMR   
+
+```{r function to summarise ASMR, echo=FALSE}
+
+asmrRun1<-function(stnID,bgc) {
+
+  # set seed to control random year 
+  set.seed(5)  
+  
+    # Generate random years
+  asmrData<-
+    climData %>% 
+    pluck("cleanedData") %>%
+    filter(stn==stnID) %>% 
+    rename(ppt="ppt_filled",
+           tmx="tmx_filled",
+           tmn="tmn_filled") %>% 
+    mutate(date=paste(year,month,day,sep="-")) %>% 
+    asmrCalc()
+  
+  yearData<-
+    asmrData %>% 
+    yearSelect(excl=c(1970,2020),win=c(1980,2005),yrs=10)
+  
+
+  asmrSummary<- 
+   asmrData %>% 
+    filter(year %in% yearData) %>% # filter for years
+    group_by(month) %>% 
+    summarise_at(vars(ends_with(".ASMR")),mean) %>%
+        ungroup() %>%
+    
+        rbind(c(13,colMeans(.)[-1])) %>%
+        mutate(month=cut(month,breaks=13,labels=c(month.abb,"Annual"))) %>% 
+    mutate(Station=str_to_title(stnID),BGC=bgc) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+    dplyr::select(Station,BGC,everything()) 
+  
+  return(list(years=yearData,asmr=asmrSummary))
+ 
+
+  
+  
+}
+  
 
 
 ```
 
+For each BGC unit, I chose the station with the best climate data coverage.  we can run this again if there's a better station to use.
+
+---------------
+
+## IDFdm1
+
+```{r calculate ASMR_}
+stnID="kimberley"
+bgc="IDFdm1"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+---------------------
+
+## MSdm1 and MSdm2
+
+```{r calculate ASMR1}
+stnID="sparwood"
+bgc="MSdm1"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output1}
+
+x$asmr %>% 
+  knitr::kable()
+```
+
+---------------------
+
+## MSxk1
+
+```{r calculate ASMR2}
+stnID="apex"
+bgc="MSxk1"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output2}
+
+x$asmr %>% 
+  knitr::kable()
+```
+
+-------------------
+
+## IDFdk1
+
+```{r calculate ASMR3}
+stnID="redLake"
+bgc="IDFdk1"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output3}
+
+x$asmr %>% 
+  knitr::kable()
+```
+
+-------------------
+
+## IDFdk2
+
+```{r calculate ASMR4}
+stnID="jellicoe"
+bgc="IDFdk2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output4}
+
+x$asmr %>% 
+  knitr::kable()
+```
+-------------------
+
+## ESSFdc2
+
+```{r calculate ASMR5}
+stnID="pennask"
+bgc="ESSFdc2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output5}
+
+x$asmr %>% 
+  knitr::kable()
+```
+
+-------------------
+
+## ESSFxc2
+Greenstone Hub is one of the stations, but only has 4 years of cleaned data.  Is there another station to use?  The spreadsheet says "Mission Creek" but I didn't see the data there.
