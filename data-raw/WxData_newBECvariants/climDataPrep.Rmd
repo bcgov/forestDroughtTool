@@ -15,9 +15,13 @@ library(lubridate)
 library(magrittr)
 
 # Load some functions
-source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/asmrCalc.R")
-source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/yearSelect.R")
+# source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/asmrCalc.R")
+# source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/yearSelect.R")
 
+
+# Load some functions
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/asmrCalc.R")
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/yearSelect.R")
 
 ```
 
@@ -283,6 +287,58 @@ climData %>%
 
 ```
 
+```{r create future dataset,eval=FALSE}
+
+load(here("data","bgcClim.rda"))
+
+clim.X<-
+  bgcClim %>% 
+  pivot_longer(cols=Tmax01:last_col()) %>% 
+  mutate(Period=paste(period,Scenario,sep="_")) %>% 
+  dplyr::select(-period,-Scenario) %>% 
+  pivot_wider(names_from="Period",values_from="value")
+
+
+
+future.ppt<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"PPT")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . / `1961 - 1990_NA`)))
+
+future.tmx<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmax")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+future.tmn<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmin")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+# Future climate data
+  future.Data<-
+    rbind(future.ppt,future.tmx,future.tmn) %>% 
+    mutate(month=str_sub(name,start=-2,end=-1)) %>% 
+    mutate(climVar=str_sub(name,start=1,end=-3)) %>% 
+    dplyr::select(BGC,climVar,month,contains("dif")) %>% 
+    pivot_longer(`2025_rcp45_dif`:last_col(),names_to="scenario",values_to="values") %>% 
+    mutate(climVar=paste(climVar,"future",sep="_")) %>% 
+    pivot_wider(names_from="climVar",values_from="values") %>% 
+    mutate(month=as.integer(month))
+
+save(future.Data,file=here::here("data-raw","WxData_newBECvariants","futureData.RData"))
+
+```
+
+```{r load future data}
+
+load(here::here("data-raw","WxData_newBECvariants","futureData.RData"))
+
+```
+
+
 ## BGC unit ASMR   
 
 ```{r function to summarise ASMR, echo=FALSE}
@@ -304,11 +360,13 @@ asmrRun1<-function(stnID,bgc) {
     mutate(date=paste(year,month,day,sep="-")) %>% 
     asmrCalc()
   
+  
   yearData<-
     asmrData %>% 
     yearSelect(excl=c(1970,2020),win=c(1980,2005),yrs=10)
   
 
+  
   asmrSummary<- 
    asmrData %>% 
     filter(year %in% yearData) %>% # filter for years
@@ -322,7 +380,60 @@ asmrRun1<-function(stnID,bgc) {
     mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
     dplyr::select(Station,BGC,everything()) 
   
-  return(list(years=yearData,asmr=asmrSummary))
+  
+  
+    # generate future AET/PET ratios
+ future.X<-
+    climData %>% 
+    pluck("cleanedData") %>% 
+    .[.$stn%in%stnID,] %>% # for some reason dplyr::filter isn't working
+    filter(stn %in% stnID) %>% 
+    rename(ppt="ppt_filled",
+           tmx="tmx_filled",
+           tmn="tmn_filled") %>% 
+    right_join(filter(future.Data,BGC==bgc),by="month") %>% 
+    mutate(ppt=PPT_future*ppt,
+           tmx=Tmax_future+tmx,
+           tmn=Tmin_future+tmn) %>% 
+   mutate(date=paste(year,month,day,sep="-")) %>% 
+   dplyr::select(stn,BGC,year,month,day,date,ppt,tmx,tmn,scenario)
+    
+   futureASMR<-rbind(data.frame(Scenario="rcp45_2025",asmrCalc(filter(future.X,scenario=="2025_rcp45_dif"))),
+    data.frame(Scenario="rcp45_2055",asmrCalc(filter(future.X,scenario=="2055_rcp45_dif"))),
+    data.frame(Scenario="rcp85_2025",asmrCalc(filter(future.X,scenario=="2025_rcp85_dif"))),
+    data.frame(Scenario="rcp85_2055",asmrCalc(filter(future.X,scenario=="2055_rcp85_dif")))) %>% 
+   
+   # create summaries
+       filter(year %in% yearData) %>% # filter for years
+    group_by(Scenario,month) %>% 
+    summarise_at(vars(ends_with(".ASMR")),mean) %>%
+        ungroup() %>%
+        mutate(Station=str_to_title(stnID),BGC=bgc) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+     mutate(month=as.integer(month)) %>% 
+    dplyr::select(Station,BGC,everything()) 
+     
+   
+  futureSummary<- 
+     futureASMR %>% 
+       mutate(month=as.integer(month)) %>% 
+      ungroup() %>% 
+     group_by(Scenario) %>% 
+     summarise_at(vars(ends_with(".ASMR")),mean) %>% 
+        mutate(Station=str_to_title(stnID),BGC=bgc,month=13) %>%
+           dplyr::select(Station,BGC,month,everything()) %>% 
+       rbind(futureASMR) %>% 
+          arrange(Scenario,month) %>% 
+         mutate(month=cut(month,breaks=13,labels=c(month.abb,"Annual"))) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+   mutate(Period=str_split_fixed(Scenario,patter="_",n=2)[,2]) %>% 
+     mutate(Scenario=str_split_fixed(Scenario,patter="_",n=2)[,1]) %>% 
+    dplyr::select(-Station) %>% 
+    dplyr::select(BGC,Period,Scenario,Month=month,everything())
+ 
+  
+  
+  return(list(years=yearData,asmr=asmrSummary,future=futureSummary))
  
 
   
@@ -357,6 +468,15 @@ x$asmr %>%
 ```
 
 
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
 ---------------
 
 ## IDFdm2
@@ -379,6 +499,15 @@ x$asmr %>%
 ```
 
 
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
 ---------------------
 
 ## MSdm1 and MSdm2
@@ -397,6 +526,15 @@ For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly sel
 
 x$asmr %>% 
   knitr::kable()
+```
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
 ```
 
 ---------------------
@@ -419,6 +557,15 @@ x$asmr %>%
   knitr::kable()
 ```
 
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
 -------------------
 
 ## IDFdk1
@@ -437,6 +584,15 @@ For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly sel
 
 x$asmr %>% 
   knitr::kable()
+```
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
 ```
 
 -------------------
@@ -458,6 +614,17 @@ For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly sel
 x$asmr %>% 
   knitr::kable()
 ```
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
+
 -------------------
 
 ## ESSFdc2
@@ -476,6 +643,15 @@ For this BGC unit, I used `r stnID %>% str_to_title()` station, and randomly sel
 
 x$asmr %>% 
   knitr::kable()
+```
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
 ```
 
 -------------------

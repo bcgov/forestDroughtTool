@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(here)
 
 # Load climate data (compiled from previous step)
 load("climData.RData")
@@ -21,29 +22,75 @@ source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/yearSelect.R")
 X<-
   climData %>% 
   pluck("cleanedData") %>% 
-  filter(stn %in% c("beaverdell","marysville")) %>% 
-  mutate(stn=factor(stn))
+  as_tibble() %>% 
+  dplyr::filter(stn %in% c("beaverdell","marysville")) %>% 
+  mutate(stn=factor(stn)) %>% 
+  mutate(stn=fct_recode(stn,IDFdm1="marysville",
+                        IDFdm2="beaverdell"))
 
 
 ```
 
 
-```{r define years of interest}
+```{r read normal and future data}
 
 # IDFdm1 - Marysville
 # IDFdm2 - Beaverdell
 
-dm1.years<-c(1981,1982,1985,1986,1988,1989,1990,1994,2001,2002)
-dm2.years<-c(1989,1999,2002,2003,2005,2007,2015,2017,2018,2019)
+load(here("data","bgcClim.rda"))
+
+clim.X<-
+  bgcClim %>% 
+ filter(BGC %in% c("IDFdm1","IDFdm2")) %>% 
+  pivot_longer(cols=Tmax01:last_col()) %>% 
+  mutate(Period=paste(period,Scenario,sep="_")) %>% 
+  dplyr::select(-period,-Scenario) %>% 
+  pivot_wider(names_from="Period",values_from="value")
 
 
+
+future.ppt<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"PPT")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . / `1961 - 1990_NA`)))
+
+future.tmx<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmax")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+future.tmn<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmin")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+# Future climate data
+  future.X<-
+    rbind(future.ppt,future.tmx,future.tmn) %>% 
+    mutate(month=str_sub(name,start=-2,end=-1)) %>% 
+    mutate(climVar=str_sub(name,start=1,end=-3)) %>% 
+    dplyr::select(BGC,climVar,month,contains("dif")) %>% 
+    pivot_longer(`2025_rcp45_dif`:last_col(),names_to="scenario",values_to="values") %>% 
+    mutate(climVar=paste(climVar,"future",sep="_")) %>% 
+    pivot_wider(names_from="climVar",values_from="values")
+
+  
 
 ```
 
 
-```{r calculate current aet pet}
+```{r create future daily climate datasets}
+
+idfDM1.years<-c(1981, 1982, 1985, 1986, 1988, 1989, 1990, 1994, 2001, 2002)
+idfDM2.years<-c(1989, 1999, 2002, 2003, 2005, 2007, 2015, 2017, 2018, 2019)
 
 
+# 
+
+X %>% 
+  
 
 
 
