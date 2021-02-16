@@ -1,0 +1,50 @@
+---
+title: "Future and Period AET for IDFdm1 and dm2"
+author: "hg"
+date: "16/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+# Load climate data (compiled from previous step)
+load("climData.RData")
+
+# Functions
+# Load some functions
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/asmrCalc.R")
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/yearSelect.R")
+
+X<-
+  climData %>% 
+  pluck("cleanedData") %>% 
+  filter(stn %in% c("beaverdell","marysville")) %>% 
+  mutate(stn=factor(stn))
+
+
+```
+
+
+```{r define years of interest}
+
+# IDFdm1 - Marysville
+# IDFdm2 - Beaverdell
+
+dm1.years<-c(1981,1982,1985,1986,1988,1989,1990,1994,2001,2002)
+dm2.years<-c(1989,1999,2002,2003,2005,2007,2015,2017,2018,2019)
+
+
+
+```
+
+
+```{r calculate current aet pet}
+
+
+
+
+
+```
