@@ -62,6 +62,7 @@ cleanData<-function(climData) {
 
 # This won't run, takes a long time
 
+
 # Compile climate data into a list
 X<-list(
 
@@ -192,6 +193,19 @@ X<-list(
              ppt=Total)%>% 
       mutate_at(vars(year:ppt),as.numeric),
     
+    
+marysville<-
+  readxl::read_excel("Marysville_IDFdm2BEC7_cleaned.xlsx") %>% 
+  pivot_longer(cols=contains("Day"),values_to="value",names_to="day") %>% 
+  pivot_wider(names_from="Element",values_from="value") %>% 
+  rename(ppt="12",
+         tmx="1",
+         tmn="2") %>% 
+  mutate(day=str_remove(day,pattern="Day ")) %>% 
+  mutate(day=as.integer(day)) %>%
+  mutate(stn="marysville") %>% 
+  dplyr::select(stn,year=Year,month=Month,day,tmn,tmx,ppt),
+    
     sparwood<-
         readxl::read_excel("Sparwood_1980-2020.xlsx") %>% 
         transmute(stn="sparwood",
@@ -222,12 +236,22 @@ rawData<-
   mutate(stn=factor(stn)) %>% 
   ungroup()
 
-# apply cleanData function
-cleanedData<-  
-  rawData %>% 
-  group_by(stn) %>% 
-  group_modify(~ cleanData(.x)) %>% 
-  ungroup()
+# try cleanData a second way
+stnList=unique(rawData$stn)
+
+for (i in 1:length(stnList)) {
+  
+  if (i==1) {cleanedData=data.frame()}
+  
+  cleanedData<-
+    rawData %>% 
+    filter(stn==stnList[i]) %>% 
+    cleanData() %>% 
+    mutate(stn=stnList[i]) %>% 
+    dplyr::select(stn,everything()) %>% 
+    rbind(cleanedData)
+  }
+
 
 climData<-
   list(rawData=rawData,cleanedData=cleanedData)
@@ -235,6 +259,7 @@ climData<-
 save(climData,file="climData.RData")
 
 ```
+
 
 Here is table summarizing the number of years for each station that have sufficient climate data for AET/PET calculation, as per DeLong et al. (2019):
 
@@ -270,8 +295,9 @@ asmrRun1<-function(stnID,bgc) {
     # Generate random years
   asmrData<-
     climData %>% 
-    pluck("cleanedData") %>%
-    filter(stn==stnID) %>% 
+    pluck("cleanedData") %>% 
+    .[.$stn%in%stnID,] %>% # for some reason dplyr::filter isn't working
+    filter(stn %in% stnID) %>% 
     rename(ppt="ppt_filled",
            tmx="tmx_filled",
            tmn="tmn_filled") %>% 
@@ -309,13 +335,35 @@ asmrRun1<-function(stnID,bgc) {
 
 For each BGC unit, I chose the station with the best climate data coverage.  we can run this again if there's a better station to use.
 
----------------
+-----------------
 
 ## IDFdm1
 
-```{r calculate ASMR_}
-stnID="kimberley"
+```{r calculate ASMR_marysville}
+stnID="marysville"
 bgc="IDFdm1"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+For this BGC unit, I used `r stnID` station, and randomly selected the following years: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_marysville}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+---------------
+
+## IDFdm2
+
+```{r calculate ASMR_}
+stnID="beaverdell"
+bgc="IDFdm2"
 
 x<-asmrRun1(stnID,bgc)
 

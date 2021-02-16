@@ -43,7 +43,7 @@ yearSelect<-function(stnData,excl=c(1940,2000),win=c(1961,1990),yrs=10) {
     no.years<-yrs-length(unique(x1$year))
 
     # 2. Create a new climate data frame with data outside the ideal climate normal period
-    x2<-stn[!stnData$year%in%(min(win):max(win)), ]
+    x2<-stnData[!stnData$year%in%(min(win):max(win)), ]
     x2<-x2[x2$year%in%sample(unique(x2$year),no.years),]
 
     # 3. Put the datasets together
