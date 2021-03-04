@@ -1,0 +1,76 @@
+---
+title: "SBSwk1 daily data"
+author: "hardy"
+date: "04/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load libraries
+library(tidyverse)
+library(sf)
+library(raster)
+library(mapview)
+library(here)
+
+
+```
+
+## Analysis of SBSwk1 data
+
+Below, I show the location of the 30 points in the SBSwk1.  As you pointed out, quite a few of them lie near the booundary of the BGC unit, which I don't think is ideal.  
+
+```{r load spatial data}
+
+SBSwk1<-
+  st_read(here("data-raw","dailyData_prelim","Extraction shapes","SBS wk 1_sampled.shp"))
+
+pts<-
+  st_read(here("data-raw","dailyData_prelim","Extraction shapes","SBS_wk1_pts.shp"))
+
+
+
+SBSwk1 %>% 
+ggplot()+
+  geom_sf()+
+  geom_sf(data=pts,aes(color="red"))+
+  theme(legend.position = "none")
+
+
+
+
+```
+
+```{r read in precipitation grids,message=F}
+
+ppt_grid<-
+  raster(here("data-raw","dailyData_prelim","Extraction shapes","PCIC_Precipitation_grids.tif")) %>% 
+  projectRaster(crs=crs("+init=epsg:3005")) %>% 
+  crop(SBSwk1) 
+
+
+# Plot ppt grids
+plot(ppt_grid)
+plot(SBSwk1,add=T,col=alpha("white",alpha=0.1))
+
+
+
+
+```
+
+As a solution, we can use the raster::extract function to extract all of the pixels 
+
+```{r raster with weights}
+
+
+  
+  
+grids<-
+  raster::extract(ppt_grid,SBSwk1,weight=TRUE,normalizeWeights=FALSE) 
+
+
+
+```
+
