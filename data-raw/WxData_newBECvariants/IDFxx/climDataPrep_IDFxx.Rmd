@@ -1,0 +1,433 @@
+---
+title: "AET/PET ratios for BGC units"
+author: "Hardy"
+date: "11/20/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message=FALSE)
+
+# Load libraries
+library(tidyverse)
+library(forestDroughtTool)
+library(lubridate)
+library(magrittr)
+library(here)
+
+# Load some functions
+# source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/asmrCalc.R")
+# source("C:/Users/hgriesba/Documents/git/forestDroughtTool/R/yearSelect.R")
+
+
+# Load some functions
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/asmrCalc.R")
+source("C:/Users/hgriesba/Documents/git/bcgov/forestDroughtTool/R/yearSelect.R")
+
+```
+
+```{r define cleanData function}
+# imputeTS has now changed so have to recode function
+
+cleanData<-function(climData) {
+  
+  # Omit years with 10 or more consecutive missing values in any climate variable
+
+  climData %>%
+  # filter(stn==stnID) %>% 
+  group_by(year) %>%
+  summarise(pptNA=imputeTS::statsNA(ppt,print_only=FALSE)$longest_na_gap,
+            tmxNA=imputeTS::statsNA(tmx,print_only=FALSE)$longest_na_gap,
+            tmnNA=imputeTS::statsNA(tmn,print_only=FALSE)$longest_na_gap)%>%
+  mutate(pptNA, pptNA = ifelse(is.na(pptNA), 0, pptNA)) %>%
+  mutate(tmxNA, tmxNA = ifelse(is.na(tmxNA), 0, tmxNA)) %>%
+  mutate(tmnNA, tmnNA = ifelse(is.na(tmnNA), 0, tmnNA)) %>%
+  filter(pptNA<10&tmxNA<10&tmnNA<10) %>%
+  select(year) %>%
+  
+  # Impute NA values using adjacent values
+  left_join(climData,by="year") %>%
+  mutate(ppt2=imputeTS::na_locf(ppt),ppt3=imputeTS::na_locf(ppt,option="nocb")) %>%
+  mutate(tmx2=imputeTS::na_locf(tmx),tmx3=imputeTS::na_locf(tmx,option="nocb")) %>%
+  mutate(tmn2=imputeTS::na_locf(tmn),tmn3=imputeTS::na_locf(tmn,option="nocb")) %>%
+  rowwise() %>%
+  mutate(ppt_filled=mean(ppt2,ppt3)) %>%
+  mutate(tmx_filled=mean(tmx2,tmx3)) %>%
+  mutate(tmn_filled=mean(tmn2,tmn3)) %>%
+  dplyr::select(year,month,day,ppt_filled,tmx_filled,tmn_filled) %>% 
+ 
+     return()
+}
+
+
+
+```
+
+## Clean IDFxx data
+
+```{r clean IDFxx data}
+
+x<-readRDS(here::here("data-raw","WxData_newBECvariants","IDFxx","IDFxx_data.rds"))
+
+# grab Cranbrook data
+cran.Data<-
+  x %>% 
+  filter(station_name=="CRANBROOK A") %>% 
+  mutate(year=as.numeric(year)) %>% 
+  filter(year>1968) %>% 
+  dplyr::select(stn=station_name,
+                year,month,day,
+                tmn=min_temp,
+                tmx=max_temp,
+                ppt=total_precip) %>% 
+  cleanData() %>% 
+  mutate(Station="Cranbrook") %>% 
+  dplyr::select(Station,everything()) %>% 
+  
+  # break into two datasets
+  mutate(Station=replace(Station,year>=1991,"Cranbrook2"))
+
+
+# grab Wardner data
+ward.Data<-
+  x %>% 
+  filter(station_name=="WARDNER KTNY HATCHERY") %>% 
+    mutate(year=as.numeric(year)) %>% 
+  filter(year>1971) %>% 
+  dplyr::select(stn=station_name,
+                year,month,day,
+                tmn=min_temp,
+                tmx=max_temp,
+                ppt=total_precip) %>% 
+  cleanData %>% 
+  mutate(Station="Wardner") %>% 
+  dplyr::select(Station,everything())%>% 
+  
+  # break into two datasets
+  mutate(Station=replace(Station,year>=1991,"Wardner2"))
+
+
+
+cleanedData<-
+ 
+  rbind(ward.Data,cran.Data) %>% 
+   as.data.frame() %>% 
+  mutate(month=as.numeric(month),
+         day=as.numeric(day))
+  
+
+
+```
+
+
+
+
+
+Here is table summarizing the number of years for each station that have sufficient climate data for AET/PET calculation, as per DeLong et al. (2019):
+
+```{r summarize data}
+
+
+# Summarize data
+cleanedData %>% 
+   
+group_by(Station) %>% 
+  summarise(NumYrs=length(unique(year)),
+            From=min(year),
+            To=max(year)) %>% 
+  knitr::kable()
+
+
+
+
+```
+
+```{r create future dataset,eval=FALSE}
+
+load(here("data","bgcClim.rda"))
+
+clim.X<-
+  bgcClim %>% 
+  pivot_longer(cols=Tmax01:last_col()) %>% 
+  mutate(Period=paste(period,Scenario,sep="_")) %>% 
+  dplyr::select(-period,-Scenario) %>% 
+  pivot_wider(names_from="Period",values_from="value")
+
+
+
+future.ppt<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"PPT")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . / `1961 - 1990_NA`)))
+
+future.tmx<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmax")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+future.tmn<-
+  clim.X %>% 
+  dplyr::filter(str_detect(name,"Tmin")) %>% 
+  mutate_at(vars(matches("_rcp")), list(dif = (~ . - `1961 - 1990_NA`)))
+
+
+# Future climate data
+  future.Data<-
+    rbind(future.ppt,future.tmx,future.tmn) %>% 
+    mutate(month=str_sub(name,start=-2,end=-1)) %>% 
+    mutate(climVar=str_sub(name,start=1,end=-3)) %>% 
+    dplyr::select(BGC,climVar,month,contains("dif")) %>% 
+    pivot_longer(`2025_rcp45_dif`:last_col(),names_to="scenario",values_to="values") %>% 
+    mutate(climVar=paste(climVar,"future",sep="_")) %>% 
+    pivot_wider(names_from="climVar",values_from="values") %>% 
+    mutate(month=as.integer(month))
+
+save(future.Data,file=here::here("data-raw","WxData_newBECvariants","futureData.RData"))
+
+```
+
+```{r load future data}
+
+load(here::here("data-raw","WxData_newBECvariants","futureData.RData"))
+
+```
+
+
+## BGC unit ASMR   
+
+```{r function to summarise ASMR, echo=FALSE}
+
+asmrRun1<-function(stnID,bgc) {
+
+  # set seed to control random year 
+  set.seed(5)  
+  
+    # Generate random years
+  asmrData<-
+    cleanedData %>% 
+    as.data.frame() %>% 
+    mutate(Station=factor(Station)) %>% 
+     # .[.$Station%in%stnID,] %>% # for some reason dplyr::filter isn't working
+    filter(Station %in% stnID) %>% 
+    rename(ppt="ppt_filled",
+           tmx="tmx_filled",
+           tmn="tmn_filled") %>% 
+    mutate(date=paste(year,month,day,sep="-")) %>% 
+    asmrCalc()
+  
+  
+  yearData<-
+    asmrData %>% 
+    yearSelect(excl=c(1960,2020),win=c(1970,2020),yrs=10)
+  
+
+  
+  asmrSummary<- 
+   asmrData %>% 
+    filter(year %in% yearData) %>% # filter for years
+    group_by(month) %>% 
+    summarise_at(vars(ends_with(".ASMR")),mean) %>%
+        ungroup() %>%
+    
+        rbind(c(13,colMeans(.)[-1])) %>%
+        mutate(month=cut(month,breaks=13,labels=c(month.abb,"Annual"))) %>% 
+    mutate(Station=str_to_title(stnID),BGC=bgc) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+    dplyr::select(Station,BGC,everything()) 
+  
+  
+  
+    # generate future AET/PET ratios
+ future.X<-
+   cleanedData %>% 
+   as.data.frame() %>% 
+    filter(Station %in% stnID) %>% 
+    rename(ppt="ppt_filled",
+           tmx="tmx_filled",
+           tmn="tmn_filled") %>% 
+   mutate_at(vars("year","month","day"),as.numeric) %>% 
+    right_join(filter(future.Data,BGC==bgc),by="month") %>% 
+    mutate(ppt=PPT_future*ppt,
+           tmx=Tmax_future+tmx,
+           tmn=Tmin_future+tmn) %>% 
+   mutate(date=paste(year,month,day,sep="-")) %>% 
+   dplyr::select(Station,BGC,year,month,day,date,ppt,tmx,tmn,scenario)
+    
+   futureASMR<-rbind(data.frame(Scenario="rcp45_2025",asmrCalc(filter(future.X,scenario=="2025_rcp45_dif"))),
+    data.frame(Scenario="rcp45_2055",asmrCalc(filter(future.X,scenario=="2055_rcp45_dif"))),
+    data.frame(Scenario="rcp85_2025",asmrCalc(filter(future.X,scenario=="2025_rcp85_dif"))),
+    data.frame(Scenario="rcp85_2055",asmrCalc(filter(future.X,scenario=="2055_rcp85_dif")))) %>% 
+   
+   # create summaries
+       filter(year %in% yearData) %>% # filter for years
+    group_by(Scenario,month) %>% 
+    summarise_at(vars(ends_with(".ASMR")),mean) %>%
+        ungroup() %>%
+        mutate(Station=str_to_title(stnID),BGC=bgc) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+     mutate(month=as.integer(month)) %>% 
+    dplyr::select(Station,BGC,everything()) 
+     
+   
+  futureSummary<- 
+     futureASMR %>% 
+       mutate(month=as.integer(month)) %>% 
+      ungroup() %>% 
+     group_by(Scenario) %>% 
+     summarise_at(vars(ends_with(".ASMR")),mean) %>% 
+        mutate(Station=str_to_title(stnID),BGC=bgc,month=13) %>%
+           dplyr::select(Station,BGC,month,everything()) %>% 
+       rbind(futureASMR) %>% 
+          arrange(Scenario,month) %>% 
+         mutate(month=cut(month,breaks=13,labels=c(month.abb,"Annual"))) %>% 
+    mutate_at(vars(ends_with(".ASMR")),round,3) %>% 
+   mutate(Period=str_split_fixed(Scenario,patter="_",n=2)[,2]) %>% 
+     mutate(Scenario=str_split_fixed(Scenario,patter="_",n=2)[,1]) %>% 
+    dplyr::select(-Station) %>% 
+    dplyr::select(BGC,Period,Scenario,Month=month,everything())
+ 
+  
+  
+  return(list(years=yearData,asmr=asmrSummary,future=futureSummary))
+ 
+
+  
+  
+}
+  
+
+
+```
+
+
+
+-----------------
+
+## IDFxx2 using Cranbrook data
+
+### 1961-1990 period
+
+```{r calculate ASMR_marysville}
+stnID="Cranbrook"
+bgc="IDFxx2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+The following years were randomly selected: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_marysville}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
+---------------
+
+### 1991-2020 period
+
+```{r calculate ASMR_}
+stnID="Cranbrook2"
+bgc="IDFxx2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+The following years were randomly selected: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
+---------------------
+
+## IDFxx2 using Wardner data
+
+### 1961-1990 period
+
+```{r}
+stnID="Wardner"
+bgc="IDFxx2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+The following years were randomly selected: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_wardner}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
+---------------
+
+### 1991-2020 period
+
+```{r calculate ASMR_wardner2}
+stnID="Wardner2"
+bgc="IDFxx2"
+
+x<-asmrRun1(stnID,bgc)
+
+```
+
+The following years were randomly selected: `r x$years`.  Here is the monthly and annual AET/PET ratio for those 10 years:
+
+```{r show output_wardner2}
+
+x$asmr %>% 
+  knitr::kable()
+
+```
+
+
+Future data are summarized in the table below:
+
+```{r}
+
+x$future %>% 
+  knitr::kable()
+
+```
+
+---------------------
